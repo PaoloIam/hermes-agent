@@ -357,4 +357,12 @@ RUN mkdir -p /opt/data
 # exit code. Without the wrapper-as-ENTRYPOINT, leading-dash args
 # like `--version` would be intercepted by /init's POSIX shell.
 ENTRYPOINT [ "/init", "/opt/hermes/docker/main-wrapper.sh" ]
-CMD [ ]
+# Default to the long-running gateway (same invocation docker-compose.yml
+# uses) so platforms that run the image with no args — Railway included —
+# get the messaging gateway instead of the interactive REPL, which exits
+# immediately when stdin is not a TTY and takes the whole container down
+# with it. Any explicit `docker run <image> <cmd>` still overrides this.
+# Do NOT set a Railway "Custom Start Command" on top of this: on
+# Dockerfile deploys it replaces the ENTRYPOINT, bypassing /init and the
+# s6 bootstrap (cont-init chown/UID remap, supervision tree).
+CMD [ "gateway", "run" ]
